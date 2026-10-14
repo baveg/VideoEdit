@@ -170,6 +170,99 @@ function fill(frame: Buffer, width: number, r: Region, shape: Shape): void {
   }
 }
 
+/** Segment épais : un disque est tamponné le long du tracé. */
+export function drawLine(
+  frame: Buffer, width: number, height: number,
+  x0: number, y0: number, x1: number, y1: number, [r, g, b]: [number, number, number], thickness: number,
+): void {
+  const steps = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0)));
+  const radius = thickness / 2;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    disc(frame, width, height, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, radius, r, g, b);
+  }
+}
+
+/** Point plein entouré de noir pour rester visible sur tous les fonds. */
+export function drawDot(
+  frame: Buffer, width: number, height: number, x: number, y: number, radius: number, [r, g, b]: [number, number, number],
+): void {
+  disc(frame, width, height, x, y, radius + Math.max(1, radius / 3), 0, 0, 0);
+  disc(frame, width, height, x, y, radius, r, g, b);
+}
+
+function disc(frame: Buffer, width: number, height: number, cx: number, cy: number, radius: number, r: number, g: number, b: number): void {
+  const r2 = radius * radius;
+  const x0 = Math.max(0, Math.floor(cx - radius)), x1 = Math.min(width - 1, Math.ceil(cx + radius));
+  const y0 = Math.max(0, Math.floor(cy - radius)), y1 = Math.min(height - 1, Math.ceil(cy + radius));
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
+      if ((x - cx) ** 2 + (y - cy) ** 2 <= r2) setPx(frame, width, x, y, r, g, b);
+    }
+  }
+}
+
+/** Police bitmap 5×7 réduite aux caractères du compteur. */
+const FONT: Record<string, string[]> = {
+  '0': [' ### ', '#   #', '#  ##', '# # #', '##  #', '#   #', ' ### '],
+  '1': ['  #  ', ' ##  ', '  #  ', '  #  ', '  #  ', '  #  ', ' ### '],
+  '2': [' ### ', '#   #', '    #', '   # ', '  #  ', ' #   ', '#####'],
+  '3': ['#####', '   # ', '  #  ', '   # ', '    #', '#   #', ' ### '],
+  '4': ['   # ', '  ## ', ' # # ', '#  # ', '#####', '   # ', '   # '],
+  '5': ['#####', '#    ', '#### ', '    #', '    #', '#   #', ' ### '],
+  '6': ['  ## ', ' #   ', '#    ', '#### ', '#   #', '#   #', ' ### '],
+  '7': ['#####', '    #', '   # ', '  #  ', ' #   ', ' #   ', ' #   '],
+  '8': [' ### ', '#   #', '#   #', ' ### ', '#   #', '#   #', ' ### '],
+  '9': [' ### ', '#   #', '#   #', ' ####', '    #', '   # ', ' ##  '],
+  A: [' ### ', '#   #', '#   #', '#####', '#   #', '#   #', '#   #'],
+  E: ['#####', '#    ', '#    ', '#### ', '#    ', '#    ', '#####'],
+  G: [' ### ', '#   #', '#    ', '# ###', '#   #', '#   #', ' ####'],
+  P: ['#### ', '#   #', '#   #', '#### ', '#    ', '#    ', '#    '],
+  S: [' ####', '#    ', '#    ', ' ### ', '    #', '    #', '#### '],
+  ':': ['     ', '  #  ', '  #  ', '     ', '  #  ', '  #  ', '     '],
+  ' ': ['     ', '     ', '     ', '     ', '     ', '     ', '     '],
+};
+
+/** Texte blanc sur bandeau sombre semi-transparent, centré en bas de l'image. */
+export function drawCounter(frame: Buffer, width: number, height: number, text: string): void {
+  const px = Math.max(2, Math.round(Math.min(width, height) / 160));
+  const tw = (text.length * 6 - 1) * px;
+  const th = 7 * px;
+  const pad = 2 * px;
+  const x0 = Math.round((width - tw) / 2);
+  const y0 = height - th - 4 * px;
+  for (let y = Math.max(0, y0 - pad); y < Math.min(height, y0 + th + pad); y++) {
+    for (let x = Math.max(0, x0 - pad); x < Math.min(width, x0 + tw + pad); x++) {
+      const o = (y * width + x) * 3;
+      frame[o] *= 0.35; frame[o + 1] *= 0.35; frame[o + 2] *= 0.35;
+    }
+  }
+  [...text].forEach((ch, i) => {
+    const glyph = FONT[ch] ?? FONT[' '];
+    for (let gy = 0; gy < 7; gy++) {
+      for (let gx = 0; gx < 5; gx++) {
+        if (glyph[gy][gx] !== '#') continue;
+        for (let y = 0; y < px; y++) {
+          for (let x = 0; x < px; x++) {
+            const fx = x0 + (i * 6 + gx) * px + x, fy = y0 + gy * px + y;
+            if (fx >= 0 && fx < width && fy >= 0 && fy < height) setPx(frame, width, fx, fy, 255, 255, 255);
+          }
+        }
+      }
+    }
+  });
+}
+
+/** Couleur stable et bien distincte par identifiant (teinte espacée du nombre d'or). */
+export function trackColor(id: number): [number, number, number] {
+  const h = (id * 0.618034) % 1;
+  const f = (n: number) => {
+    const k = (n + h * 6) % 6;
+    return Math.round(255 * (1 - 0.85 * Math.max(0, Math.min(k, 4 - k, 1))));
+  };
+  return [f(5), f(3), f(1)];
+}
+
 function setPx(frame: Buffer, width: number, x: number, y: number, r: number, g: number, b: number): void {
   const o = (y * width + x) * 3;
   frame[o] = r;
