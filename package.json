@@ -11,7 +11,8 @@
     "models": "tsx src/cli.ts models",
     "faceghost": "tsx src/cli.ts run -m faceghost",
     "pixelateme": "tsx src/cli.ts run -m pixelateme",
-    "blackout": "tsx src/cli.ts run -m blackout"
+    "blackout": "tsx src/cli.ts run -m blackout",
+    "personbox": "tsx src/cli.ts run -m personbox"
   },
   "license": "MIT",
   "type": "module",

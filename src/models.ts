@@ -5,14 +5,21 @@ import path from 'node:path';
 
 export const MODELS_DIR = path.resolve('models');
 
-/** Modèles YOLO-face exportés en ONNX (sortie [1, 5, N] : cx, cy, w, h, score). */
-export const MODELS: Record<string, { url: string; note: string }> = {
+/**
+ * Modèles YOLO en ONNX : YOLO-face (sortie [1, 5, N]) et YOLO11 COCO pour les personnes (sortie [1, 84, N]).
+ * Les modèles sans `url` ne sont pas hébergés en ONNX : ils s'exportent une fois avec scripts/export-person-models.py.
+ */
+export const MODELS: Record<string, { url?: string; note: string }> = {
   'yolov8n-face': { url: hf('yolov8n-face'), note: 'très rapide (12 Mo) — par défaut' },
   'yolov8m-face': { url: hf('yolov8m-face'), note: 'plus précis, plus lent' },
   'yolov8l-face': { url: hf('yolov8l-face'), note: 'le plus précis des v8' },
   'yolov11n-face': { url: hf('yolov11n-face'), note: 'YOLO11 nano' },
   'yolov11s-face': { url: hf('yolov11s-face'), note: 'YOLO11 small — bon compromis' },
   'yolov11m-face': { url: hf('yolov11m-face'), note: 'YOLO11 medium' },
+  'yolo11n-person': { note: 'personnes — YOLO11 nano, très rapide' },
+  'yolo11s-person': { note: 'personnes — YOLO11 small' },
+  'yolo11m-person': { note: 'personnes — YOLO11 medium, par défaut pour personbox' },
+  'yolo11l-person': { note: 'personnes — YOLO11 large, le plus précis' },
 };
 
 function hf(name: string): string {
@@ -28,7 +35,10 @@ export async function resolveModel(nameOrPath: string): Promise<string> {
   const model = MODELS[nameOrPath];
   if (!model) throw new Error(`modèle inconnu "${nameOrPath}". Disponibles : ${Object.keys(MODELS).join(', ')}`);
   const file = path.join(MODELS_DIR, `${nameOrPath}.onnx`);
-  if (!existsSync(file)) await download(model.url, file);
+  if (!existsSync(file)) {
+    if (!model.url) throw new Error(`modèle ${nameOrPath} absent de ${MODELS_DIR} : lancez "python scripts/export-person-models.py"`);
+    await download(model.url, file);
+  }
   return file;
 }
 

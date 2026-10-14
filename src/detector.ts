@@ -1,8 +1,11 @@
 import ort from 'onnxruntime-node';
 import type { Box, Device } from './types.js';
 
-/** Détecteur de visages YOLO-face (ONNX) exécuté sur GPU via DirectML. */
-export class YoloFaceDetector {
+/**
+ * Détecteur YOLO (ONNX) exécuté sur GPU via DirectML.
+ * Sortie [1, 4 + classes, N] : YOLO-face (1 classe) ou COCO (80 classes, `classId` 0 = personne).
+ */
+export class YoloDetector {
   private input?: Float32Array;
   private inputW = 0;
   private inputH = 0;
@@ -12,9 +15,10 @@ export class YoloFaceDetector {
     private size: number,
     private conf: number,
     private iou: number,
+    private classId: number,
   ) {}
 
-  static async create(modelPath: string, device: Device, size: number, conf: number, iou: number) {
+  static async create(modelPath: string, device: Device, size: number, conf: number, iou: number, classId = 0) {
     const session = await ort.InferenceSession.create(modelPath, {
       executionProviders: device === 'gpu' ? ['dml', 'cpu'] : ['cpu'],
       graphOptimizationLevel: 'all',
@@ -22,7 +26,7 @@ export class YoloFaceDetector {
       executionMode: 'sequential',
       logSeverityLevel: 3,
     });
-    return new YoloFaceDetector(session, size, conf, iou);
+    return new YoloDetector(session, size, conf, iou, classId);
   }
 
   async detect(frame: Buffer, width: number, height: number): Promise<Box[]> {
@@ -46,10 +50,12 @@ export class YoloFaceDetector {
     const result = out[this.session.outputNames[0]];
     const data = result.data as Float32Array;
     const n = result.dims[2];
+    const scores = (4 + this.classId) * n;
+    if (4 + this.classId >= result.dims[1]) throw new Error(`classe ${this.classId} absente du modèle (${result.dims[1] - 4} classe(s))`);
 
     const boxes: Box[] = [];
     for (let i = 0; i < n; i++) {
-      const score = data[4 * n + i];
+      const score = data[scores + i];
       if (score < this.conf) continue;
       const cx = data[i] / scale;
       const cy = data[n + i] / scale;

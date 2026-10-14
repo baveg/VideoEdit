@@ -27,6 +27,17 @@ Déposez les vidéos dans `input/`, puis :
 npm run faceghost       # flou gaussien en ellipse (par défaut)
 npm run pixelateme      # mosaïque
 npm run blackout        # masque noir
+npm run personbox       # cadre autour des personnes (caméra en hauteur, foule)
+```
+
+`personbox` n'anonymise pas : il détecte les personnes (YOLO11 COCO, classe « person ») et dessine un cadre autour.
+Réglages par défaut adaptés à une caméra en hauteur : `--model yolo11m-person --detect-size 1280 --conf 0.35`
+(personnes petites ou vues de dessus). Chaque option reste modifiable :
+
+```powershell
+npm run personbox -- --box-color "#ffcc00" --box-thickness 4
+npm run personbox -- --model yolo11s-person --detect-size 960   # plus rapide
+npm run personbox -- --model yolo11l-person                     # plus précis
 ```
 
 Options (à ajouter après `--`) :
@@ -41,7 +52,7 @@ npm run dev -- --debug-boxes -o output\debug              # affiche les détecti
 |---|---|---|
 | `-i, --input` | `input` | dossier source |
 | `-o, --output` | `output` | dossier de sortie |
-| `-m, --mode` | `faceghost` | `faceghost`, `pixelateme`, `blackout` |
+| `-m, --mode` | `faceghost` | `faceghost`, `pixelateme`, `blackout`, `personbox` |
 | `--shape` | `ellipse` | `ellipse` ou `rect` |
 | `--model` | `yolov8n-face` | nom de modèle (`npm run models`) ou chemin vers un `.onnx` |
 | `--device` | `gpu` | `gpu` (DirectML) ou `cpu` |
@@ -50,6 +61,8 @@ npm run dev -- --debug-boxes -o output\debug              # affiche les détecti
 | `--detect-every` | `1` | détecter 1 image sur n (plus rapide) |
 | `--padding` | `0.25` | marge autour du visage |
 | `--persist` | `8` | images pendant lesquelles un visage perdu reste masqué |
+| `--box-color` | `#00ff00` | couleur des cadres (`personbox`, `--debug-boxes`) |
+| `--box-thickness` | auto | épaisseur des cadres en px |
 | `--strength` | `1` | intensité du flou / taille des blocs |
 | `--codec` | `h264_nvenc` | `hevc_nvenc`, `av1_nvenc`, `libx264`… |
 | `--quality` | `21` | CQ (NVENC) ou CRF (x264) ; plus bas = meilleure qualité |
@@ -67,7 +80,16 @@ npm run models                  # liste (✔ = déjà téléchargé)
 npm run models -- yolov8m-face  # télécharge
 ```
 
-Les modèles viennent de [deepghs/yolo-face](https://huggingface.co/deepghs/yolo-face) et sont téléchargés dans `models/` au premier usage.
+Les modèles de visages viennent de [deepghs/yolo-face](https://huggingface.co/deepghs/yolo-face) et sont téléchargés dans `models/` au premier usage.
+
+Les modèles de personnes (`yolo11{n,s,m,l}-person`) ne sont pas publiés en ONNX : on les exporte une seule fois
+depuis les poids officiels Ultralytics (le traitement reste sans Python) :
+
+```powershell
+python -m venv .venv-export
+.venv-export\Scripts\pip install ultralytics onnx onnxslim
+.venv-export\Scripts\python scripts/export-person-models.py
+```
 
 ## Script externe (faceghost, PixelateMe, script Python…)
 
@@ -92,8 +114,8 @@ node dist/cli.js -m pixelateme
 src/cli.ts        commandes run / models / doctor
 src/processor.ts  pipeline par vidéo + moteur externe
 src/ffmpeg.ts     probe, décodeur/encodeur FFmpeg en pipes rawvideo
-src/detector.ts   YOLO-face ONNX (prétraitement, NMS)
+src/detector.ts   YOLO ONNX visages / personnes (prétraitement, NMS)
 src/tracker.ts    lissage temporel des boîtes (anti-clignotement)
-src/effects.ts    faceghost, pixelateme, blackout
+src/effects.ts    faceghost, pixelateme, blackout, cadres (personbox)
 src/models.ts     catalogue et téléchargement des modèles
 ```

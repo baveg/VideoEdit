@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { YoloFaceDetector } from './detector.js';
+import { YoloDetector } from './detector.js';
 import { applyEffect, drawBoxes } from './effects.js';
 import { probe, readFrames, spawnDecoder, spawnEncoder, waitExit, writeFrame } from './ffmpeg.js';
 import { FaceTracker } from './tracker.js';
@@ -12,9 +12,9 @@ export interface Progress {
   faces: number;
 }
 
-/** Floute/pixelise les visages d'une vidéo : décodage FFmpeg → YOLO-face (GPU) → effet → encodage NVENC. */
+/** Floute/pixelise les visages (ou encadre les personnes) d'une vidéo : décodage FFmpeg → YOLO (GPU) → effet → encodage NVENC. */
 export async function processVideo(
-  detector: YoloFaceDetector,
+  detector: YoloDetector,
   input: string,
   output: string,
   opts: ProcessOptions,
@@ -23,6 +23,7 @@ export async function processVideo(
   const info = await probe(input);
   const frameSize = info.width * info.height * 3;
   const tracker = new FaceTracker(opts.persist);
+  const thickness = opts.boxThickness || Math.max(2, Math.round(Math.min(info.width, info.height) / 360));
 
   const decoder = spawnDecoder(input, opts.hwDecode);
   const encoder = spawnEncoder(input, output, info, opts.codec, opts.quality);
@@ -44,7 +45,7 @@ export async function processVideo(
         boxes = tracker.current();
       }
       applyEffect(frame, info.width, info.height, boxes, opts.effect, opts.shape, opts.padding, opts.strength);
-      if (opts.debugBoxes) drawBoxes(frame, info.width, info.height, boxes);
+      if (opts.effect === 'personbox' || opts.debugBoxes) drawBoxes(frame, info.width, info.height, boxes, opts.boxColor, thickness);
       await writeFrame(encoder, frame);
       frameIndex++;
       if (frameIndex % 10 === 0) {

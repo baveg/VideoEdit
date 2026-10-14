@@ -7,11 +7,12 @@ interface Region {
   h: number;
 }
 
-/** Applique l'effet choisi sur chaque visage, directement dans l'image RGB24. */
+/** Applique l'effet choisi sur chaque visage, directement dans l'image RGB24 (personbox : rien, voir drawBoxes). */
 export function applyEffect(
   frame: Buffer, width: number, height: number,
   boxes: Box[], effect: Effect, shape: Shape, padding: number, strength: number,
 ): void {
+  if (effect === 'personbox') return;
   for (const box of boxes) {
     const region = padRegion(box, padding, width, height);
     if (region.w < 2 || region.h < 2) continue;
@@ -21,13 +22,17 @@ export function applyEffect(
   }
 }
 
-export function drawBoxes(frame: Buffer, width: number, height: number, boxes: Box[]): void {
-  for (const b of boxes) {
-    const x1 = clamp(Math.round(b.x1), 0, width - 1), x2 = clamp(Math.round(b.x2), 0, width - 1);
-    const y1 = clamp(Math.round(b.y1), 0, height - 1), y2 = clamp(Math.round(b.y2), 0, height - 1);
-    for (let t = 0; t < 2; t++) {
-      for (let x = x1; x <= x2; x++) { setPx(frame, width, x, Math.min(y1 + t, y2), 0, 255, 0); setPx(frame, width, x, Math.max(y2 - t, y1), 0, 255, 0); }
-      for (let y = y1; y <= y2; y++) { setPx(frame, width, Math.min(x1 + t, x2), y, 0, 255, 0); setPx(frame, width, Math.max(x2 - t, x1), y, 0, 255, 0); }
+/** Dessine un cadre autour de chaque boîte (personbox, --debug-boxes). */
+export function drawBoxes(
+  frame: Buffer, width: number, height: number, boxes: Box[],
+  [r, g, b]: [number, number, number] = [0, 255, 0], thickness = 2,
+): void {
+  for (const box of boxes) {
+    const x1 = clamp(Math.round(box.x1), 0, width - 1), x2 = clamp(Math.round(box.x2), 0, width - 1);
+    const y1 = clamp(Math.round(box.y1), 0, height - 1), y2 = clamp(Math.round(box.y2), 0, height - 1);
+    for (let t = 0; t < thickness; t++) {
+      for (let x = x1; x <= x2; x++) { setPx(frame, width, x, Math.min(y1 + t, y2), r, g, b); setPx(frame, width, x, Math.max(y2 - t, y1), r, g, b); }
+      for (let y = y1; y <= y2; y++) { setPx(frame, width, Math.min(x1 + t, x2), y, r, g, b); setPx(frame, width, Math.max(x2 - t, x1), y, r, g, b); }
     }
   }
 }

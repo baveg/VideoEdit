@@ -1,7 +1,7 @@
 export type Box = { x1: number; y1: number; x2: number; y2: number; score: number };
 
 /** Traitements disponibles. */
-export type Effect = 'faceghost' | 'pixelateme' | 'blackout';
+export type Effect = 'faceghost' | 'pixelateme' | 'blackout' | 'personbox';
 export type Shape = 'ellipse' | 'rect';
 export type Device = 'gpu' | 'cpu';
 
@@ -21,6 +21,9 @@ export interface ProcessOptions {
   quality: number;
   hwDecode: boolean;
   debugBoxes: boolean;
+  /** Couleur RGB et épaisseur (px) des cadres pour personbox / --debug-boxes. */
+  boxColor: [number, number, number];
+  boxThickness: number;
 }
 
 export interface VideoInfo {
