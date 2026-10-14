@@ -1,0 +1,8 @@
+node_modules/
+dist/
+models/*.onnx
+models/*.part
+input/*
+output/*
+!input/.gitkeep
+!output/.gitkeep

@@ -1,0 +1,30 @@
+{
+  "name": "videoedit",
+  "version": "1.0.0",
+  "description": "Anonymisation de visages dans des vidéos (YOLO-face + FFmpeg, GPU)",
+  "main": "dist/cli.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "dev": "tsx src/cli.ts",
+    "doctor": "tsx src/cli.ts doctor",
+    "models": "tsx src/cli.ts models",
+    "faceghost": "tsx src/cli.ts run -m faceghost",
+    "pixelateme": "tsx src/cli.ts run -m pixelateme",
+    "blackout": "tsx src/cli.ts run -m blackout"
+  },
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "commander": "^15.0.0",
+    "onnxruntime-node": "^1.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "bin": {
+    "videoedit": "dist/cli.js"
+  }
+}
