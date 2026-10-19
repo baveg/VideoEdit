@@ -36,6 +36,8 @@ export interface ProcessOptions {
   countLine?: number;
   /** Écrit les trajectoires retenues en JSON à côté de la vidéo. */
   exportTracks: boolean;
+  /** Recadrage portrait 9:16 en 1080×1920 : position horizontale du cadre (0 = gauche, 0.5 = centre, 1 = droite). */
+  portrait?: number;
 }
 
 export interface VideoInfo {

@@ -55,6 +55,7 @@ program
   .option('--track-boxes', 'persontrack : dessine aussi les cadres')
   .option('--count-line [ratio]', 'personnes : ligne verticale de comptage (position 0–1, 0.5 = centre) et compteur de passages', parseFloat)
   .option('--export-tracks', 'personnes : écrit les trajectoires dans <vidéo>.tracks.json')
+  .option('--portrait [x]', 'recadre en portrait 9:16 (1080×1920), x = position horizontale 0–1 (0.5 = centre)', parseFloat)
   .option('-j, --jobs <n>', 'nombre de vidéos traitées en parallèle', toInt, 1)
   .option('--overwrite', 'retraite les vidéos déjà présentes en sortie')
   .option('--external <command>', 'utilise un script externe à la place, ex: "python faceghost.py {input} {output}"')
@@ -131,6 +132,8 @@ async function run(o: any, cmd: Command): Promise<void> {
     // --count-line sans valeur : commander donne true → ligne au centre.
     countLine: o.countLine === undefined ? undefined : o.countLine === true ? 0.5 : o.countLine,
     exportTracks: !!o.exportTracks,
+    // --portrait sans valeur : cadre centré.
+    portrait: o.portrait === undefined ? undefined : o.portrait === true ? 0.5 : o.portrait,
   };
 
   if (!o.external && !(await hasEncoder(opts.codec))) {
@@ -142,7 +145,7 @@ async function run(o: any, cmd: Command): Promise<void> {
     .map((file) => ({
       file,
       input: path.join(inputDir, file),
-      output: path.join(outputDir, `${path.parse(file).name}_${o.external ? 'external' : opts.effect}.mp4`),
+      output: path.join(outputDir, `${path.parse(file).name}_${o.external ? 'external' : opts.effect}${opts.portrait !== undefined ? '_portrait' : ''}.mp4`),
     }))
     .filter((t) => {
       if (!o.overwrite && existsSync(t.output)) {

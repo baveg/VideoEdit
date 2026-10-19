@@ -179,7 +179,7 @@ async function transcode(
   perFrame: (frame: Buffer, index: number) => void | Promise<void>,
 ): Promise<number> {
   const decoder = spawnDecoder(input, opts.hwDecode);
-  const encoder = spawnEncoder(input, output, info, opts.codec, opts.quality);
+  const encoder = spawnEncoder(input, output, info, opts.codec, opts.quality, opts.portrait);
   const decoderDone = waitExit(decoder, 'décodage FFmpeg');
   const encoderDone = waitExit(encoder, 'encodage FFmpeg');
   // Si l'un des deux process échoue, on arrête l'autre pour ne pas bloquer.

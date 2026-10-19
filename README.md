@@ -25,6 +25,8 @@ Déposez les vidéos dans `input/`, puis :
 
 ```powershell
 npm run faceghost       # flou gaussien en ellipse (par défaut)
+npm run faceghost-portrait  # flou des visages + recadrage portrait 9:16 (1080×1920)
+npm run faceghost-portrait  # flou des visages + recadrage portrait 9:16 (1080×1920)
 npm run pixelateme      # mosaïque
 npm run blackout        # masque noir
 npm run personbox       # cadre autour des personnes (caméra en hauteur, foule)
@@ -60,6 +62,14 @@ npm run persontrack -- --count-line 0.3                         # ligne à 30 % 
 Avec `--count-line`, une ligne verticale est tracée et un compteur « PASSAGES » en bas de la vidéo
 s'incrémente à chaque personne qui la franchit (dans un sens ou dans l'autre, une seule fois par personne).
 
+Avec `--portrait`, la vidéo (carrée ou paysage) est recadrée en 9:16 sur toute sa hauteur puis mise en 1080×1920.
+Le cadre est centré ; `--portrait 0` le place à gauche, `--portrait 1` à droite (ex. `npm run faceghost-portrait -- 0.3`).
+Le floutage est fait avant le recadrage, sur l'image entière. Sortie : `<vidéo>_<mode>_portrait.mp4`.
+
+Avec `--portrait`, la vidéo (carrée ou paysage) est recadrée en 9:16 sur toute sa hauteur puis mise en 1080×1920.
+Le cadre est centré ; `--portrait 0` le place à gauche, `--portrait 1` à droite (ex. `npm run faceghost-portrait -- 0.3`).
+Le floutage est fait avant le recadrage, sur l'image entière. Sortie : `<vidéo>_<mode>_portrait.mp4`.
+
 Options (à ajouter après `--`) :
 
 ```powershell
@@ -91,6 +101,8 @@ npm run dev -- --debug-boxes -o output\debug              # affiche les détecti
 | `--track-boxes` | | persontrack : dessine aussi les cadres |
 | `--count-line [ratio]` | | personnes : ligne de comptage verticale (0.5 = centre) et compteur de passages |
 | `--export-tracks` | | personnes : exporte les trajectoires en JSON |
+| `--portrait [x]` | | recadrage portrait 9:16 en 1080×1920, x = position horizontale (0.5 = centre) |
+| `--portrait [x]` | | recadrage portrait 9:16 en 1080×1920, x = position horizontale (0.5 = centre) |
 | `--strength` | `1` | intensité du flou / taille des blocs |
 | `--codec` | `h264_nvenc` | `hevc_nvenc`, `av1_nvenc`, `libx264`… |
 | `--quality` | `21` | CQ (NVENC) ou CRF (x264) ; plus bas = meilleure qualité |

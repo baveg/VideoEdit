@@ -47,20 +47,36 @@ export function spawnEncoder(
   info: VideoInfo,
   codec: string,
   quality: number,
+  portrait?: number,
 ): ChildProcessWithoutNullStreams {
   const args = [
     '-hide_banner', '-loglevel', 'error', '-y',
     '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', `${info.width}x${info.height}`, '-framerate', info.fps, '-i', '-',
     '-i', input,
     '-map', '0:v:0', '-map', '1:a?', '-map_metadata', '1',
-    '-c:v', codec,
   ];
+  if (portrait !== undefined) args.push('-vf', portraitFilter(info, portrait));
+  args.push('-c:v', codec);
   if (codec.endsWith('_nvenc')) args.push('-preset', 'p5', '-rc', 'vbr', '-cq', String(quality), '-b:v', '0');
   else args.push('-preset', 'medium', '-crf', String(quality));
   args.push('-pix_fmt', 'yuv420p');
   args.push('-c:a', info.audioCodec && MP4_AUDIO_COPY.has(info.audioCodec) ? 'copy' : 'aac');
   args.push('-movflags', '+faststart', '-shortest', output);
   return spawn('ffmpeg', args);
+}
+
+/**
+ * Découpe la plus grande zone 9:16 de l'image (carré, paysage : on garde toute la hauteur et on choisit
+ * la position horizontale `x` entre 0 et 1), puis la met à l'échelle en 1080×1920.
+ */
+function portraitFilter(info: VideoInfo, x: number): string {
+  const even = (v: number) => Math.max(2, Math.floor(v / 2) * 2);
+  const wide = info.width / info.height > 9 / 16;
+  const cw = wide ? even((info.height * 9) / 16) : even(info.width);
+  const ch = wide ? even(info.height) : even((info.width * 16) / 9);
+  const cx = Math.round((info.width - cw) * Math.min(1, Math.max(0, x)));
+  const cy = Math.round((info.height - ch) / 2);
+  return `crop=${cw}:${ch}:${cx}:${cy},scale=1080:1920:flags=lanczos,setsar=1`;
 }
 
 /** Lit la sortie rawvideo du décodeur et produit une image complète à la fois. */

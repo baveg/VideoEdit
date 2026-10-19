@@ -10,6 +10,7 @@
     "doctor": "tsx src/cli.ts doctor",
     "models": "tsx src/cli.ts models",
     "faceghost": "tsx src/cli.ts run -m faceghost",
+    "faceghost-portrait": "tsx src/cli.ts run -m faceghost --portrait",
     "pixelateme": "tsx src/cli.ts run -m pixelateme",
     "blackout": "tsx src/cli.ts run -m blackout",
     "personbox": "tsx src/cli.ts run -m personbox",
