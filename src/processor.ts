@@ -33,7 +33,8 @@ export async function processVideo(
   if (opts.effect === 'personbox' || opts.effect === 'persontrack') return processPersons(detector, input, output, opts, onProgress);
 
   const info = await probe(input);
-  const tracker = new FaceTracker(opts.persist);
+  // Au-delà de --max-face (fraction de la hauteur), la détection n'est pas masquée (costume, pas de gros plans).
+  const tracker = new FaceTracker(opts.persist, opts.maxFace > 0 ? opts.maxFace * info.height : Infinity);
   const thickness = boxThickness(info, opts);
   const start = Date.now();
   let boxes: Box[] = [];
@@ -179,7 +180,7 @@ async function transcode(
   perFrame: (frame: Buffer, index: number) => void | Promise<void>,
 ): Promise<number> {
   const decoder = spawnDecoder(input, opts.hwDecode);
-  const encoder = spawnEncoder(input, output, info, opts.codec, opts.quality, opts.portrait);
+  const encoder = spawnEncoder(input, output, info, opts);
   const decoderDone = waitExit(decoder, 'décodage FFmpeg');
   const encoderDone = waitExit(encoder, 'encodage FFmpeg');
   // Si l'un des deux process échoue, on arrête l'autre pour ne pas bloquer.

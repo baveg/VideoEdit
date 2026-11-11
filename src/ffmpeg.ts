@@ -1,7 +1,7 @@
 import { spawn, execFile, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { once } from 'node:events';
 import { promisify } from 'node:util';
-import type { VideoInfo } from './types.js';
+import type { ProcessOptions, VideoInfo } from './types.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -45,18 +45,33 @@ export function spawnEncoder(
   input: string,
   output: string,
   info: VideoInfo,
-  codec: string,
-  quality: number,
-  portrait?: number,
+  { codec, quality, portrait, logo, logoSize }: Pick<ProcessOptions, 'codec' | 'quality' | 'portrait' | 'logo' | 'logoSize'>,
 ): ChildProcessWithoutNullStreams {
   const args = [
     '-hide_banner', '-loglevel', 'error', '-y',
     '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', `${info.width}x${info.height}`, '-framerate', info.fps, '-i', '-',
     '-i', input,
-    '-map', '0:v:0', '-map', '1:a?', '-map_metadata', '1',
   ];
-  if (portrait !== undefined) args.push('-vf', portraitFilter(info, portrait));
-  args.push('-c:v', codec);
+  if (logo) args.push('-i', logo);
+
+  // Recadrage portrait puis logo en haut à droite de l'image finale.
+  const filters: string[] = [];
+  let video = '[0:v]';
+  if (portrait !== undefined) {
+    filters.push(`${video}${portraitFilter(info, portrait)}[base]`);
+    video = '[base]';
+  }
+  if (logo) {
+    const outWidth = portrait !== undefined ? 1080 : info.width;
+    const logoWidth = Math.max(2, Math.round((outWidth * logoSize) / 2) * 2);
+    const margin = Math.round(outWidth * 0.03);
+    filters.push(`[2:v]format=rgba,scale=${logoWidth}:-2:flags=lanczos[logo]`);
+    filters.push(`${video}[logo]overlay=W-w-${margin}:${margin}[v]`);
+    video = '[v]';
+  }
+  if (filters.length) args.push('-filter_complex', filters.join(';'), '-map', video);
+  else args.push('-map', '0:v:0');
+  args.push('-map', '1:a?', '-map_metadata', '1', '-c:v', codec);
   if (codec.endsWith('_nvenc')) args.push('-preset', 'p5', '-rc', 'vbr', '-cq', String(quality), '-b:v', '0');
   else args.push('-preset', 'medium', '-crf', String(quality));
   args.push('-pix_fmt', 'yuv420p');

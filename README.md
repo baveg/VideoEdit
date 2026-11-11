@@ -26,7 +26,7 @@ Déposez les vidéos dans `input/`, puis :
 ```powershell
 npm run faceghost       # flou gaussien en ellipse (par défaut)
 npm run faceghost-portrait  # flou des visages + recadrage portrait 9:16 (1080×1920)
-npm run faceghost-portrait  # flou des visages + recadrage portrait 9:16 (1080×1920)
+npm run faceghost-portrait-logo  # idem + logo en haut à droite (input/logo.png)
 npm run pixelateme      # mosaïque
 npm run blackout        # masque noir
 npm run personbox       # cadre autour des personnes (caméra en hauteur, foule)
@@ -66,9 +66,8 @@ Avec `--portrait`, la vidéo (carrée ou paysage) est recadrée en 9:16 sur tout
 Le cadre est centré ; `--portrait 0` le place à gauche, `--portrait 1` à droite (ex. `npm run faceghost-portrait -- 0.3`).
 Le floutage est fait avant le recadrage, sur l'image entière. Sortie : `<vidéo>_<mode>_portrait.mp4`.
 
-Avec `--portrait`, la vidéo (carrée ou paysage) est recadrée en 9:16 sur toute sa hauteur puis mise en 1080×1920.
-Le cadre est centré ; `--portrait 0` le place à gauche, `--portrait 1` à droite (ex. `npm run faceghost-portrait -- 0.3`).
-Le floutage est fait avant le recadrage, sur l'image entière. Sortie : `<vidéo>_<mode>_portrait.mp4`.
+Avec `--logo`, `logo.png` du dossier d'entrée (ou `--logo chemin\vers\logo.png`) est incrusté en haut à droite,
+transparence conservée, sur 15 % de la largeur de la vidéo (`--logo-size 0.2` pour 20 %). Sortie suffixée `_logo`.
 
 Options (à ajouter après `--`) :
 
@@ -90,6 +89,7 @@ npm run dev -- --debug-boxes -o output\debug              # affiche les détecti
 | `--detect-size` | `640` | résolution d'analyse ; `1280` pour les petits visages |
 | `--detect-every` | `1` | détecter 1 image sur n (plus rapide) |
 | `--padding` | `0.25` | marge autour du visage |
+| `--max-face` | `0` | visages plus hauts que cette fraction de l'image non masqués (ex. `0.1` pour épargner les costumes) ; `0` = tous masqués |
 | `--persist` | `8` | images pendant lesquelles un visage perdu reste masqué |
 | `--box-color` | `#00ff00` | couleur des cadres (`personbox`, `--debug-boxes`) |
 | `--box-thickness` | auto | épaisseur des cadres et des traits en px |
@@ -101,9 +101,10 @@ npm run dev -- --debug-boxes -o output\debug              # affiche les détecti
 | `--track-boxes` | | persontrack : dessine aussi les cadres |
 | `--count-line [ratio]` | | personnes : ligne de comptage verticale (0.5 = centre) et compteur de passages |
 | `--export-tracks` | | personnes : exporte les trajectoires en JSON |
+| `--logo [file]` | | logo en haut à droite (défaut : `<entrée>/logo.png`) |
+| `--logo-size` | `0.15` | largeur du logo en fraction de la largeur de la vidéo |
 | `--portrait [x]` | | recadrage portrait 9:16 en 1080×1920, x = position horizontale (0.5 = centre) |
-| `--portrait [x]` | | recadrage portrait 9:16 en 1080×1920, x = position horizontale (0.5 = centre) |
-| `--strength` | `1` | intensité du flou / taille des blocs |
+| `--strength` | `1` | intensité du flou / taille des blocs (faceghost : flou léger par défaut, `2` à `3` pour un flou fort) |
 | `--codec` | `h264_nvenc` | `hevc_nvenc`, `av1_nvenc`, `libx264`… |
 | `--quality` | `21` | CQ (NVENC) ou CRF (x264) ; plus bas = meilleure qualité |
 | `--no-hw-decode` | | désactive le décodage CUDA |

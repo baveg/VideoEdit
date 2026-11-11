@@ -15,6 +15,8 @@ export interface ProcessOptions {
   detectSize: number;
   detectEvery: number;
   padding: number;
+  /** Visages : hauteur max d'une détection en fraction de la hauteur de l'image, au-delà elle est ignorée (0 = pas de limite). */
+  maxFace: number;
   persist: number;
   strength: number;
   codec: string;
@@ -38,6 +40,9 @@ export interface ProcessOptions {
   exportTracks: boolean;
   /** Recadrage portrait 9:16 en 1080×1920 : position horizontale du cadre (0 = gauche, 0.5 = centre, 1 = droite). */
   portrait?: number;
+  /** Image (PNG avec transparence) incrustée en haut à droite, largeur en fraction de la largeur de sortie. */
+  logo?: string;
+  logoSize: number;
 }
 
 export interface VideoInfo {

@@ -39,6 +39,7 @@ program
   .option('--detect-size <px>', 'taille d\'analyse (1280 pour les petits visages / 4K)', toInt, 640)
   .option('--detect-every <n>', 'détecter 1 image sur n (plus rapide, moins précis)', toInt, 1)
   .option('--padding <ratio>', 'marge autour du visage', parseFloat, 0.25)
+  .option('--max-face <ratio>', 'ignore les visages plus hauts que cette fraction de l\'image (0 = pas de limite)', parseFloat, 0)
   .option('--persist <frames>', 'garde le masque n images après la perte d\'un visage', toInt, 8)
   .option('--strength <n>', 'intensité du flou / taille des blocs (1 = normal)', parseFloat, 1)
   .option('--codec <codec>', 'encodeur vidéo (h264_nvenc, hevc_nvenc, av1_nvenc, libx264)', 'h264_nvenc')
@@ -56,6 +57,8 @@ program
   .option('--count-line [ratio]', 'personnes : ligne verticale de comptage (position 0–1, 0.5 = centre) et compteur de passages', parseFloat)
   .option('--export-tracks', 'personnes : écrit les trajectoires dans <vidéo>.tracks.json')
   .option('--portrait [x]', 'recadre en portrait 9:16 (1080×1920), x = position horizontale 0–1 (0.5 = centre)', parseFloat)
+  .option('--logo [file]', 'incruste un logo en haut à droite (défaut : <dossier d\'entrée>/logo.png)')
+  .option('--logo-size <ratio>', 'largeur du logo en fraction de la largeur de la vidéo', parseFloat, 0.15)
   .option('-j, --jobs <n>', 'nombre de vidéos traitées en parallèle', toInt, 1)
   .option('--overwrite', 'retraite les vidéos déjà présentes en sortie')
   .option('--external <command>', 'utilise un script externe à la place, ex: "python faceghost.py {input} {output}"')
@@ -115,6 +118,7 @@ async function run(o: any, cmd: Command): Promise<void> {
     detectSize: o.detectSize,
     detectEvery: Math.max(1, o.detectEvery),
     padding: o.padding,
+    maxFace: o.maxFace,
     persist: o.persist,
     strength: o.strength,
     codec: o.codec,
@@ -134,7 +138,11 @@ async function run(o: any, cmd: Command): Promise<void> {
     exportTracks: !!o.exportTracks,
     // --portrait sans valeur : cadre centré.
     portrait: o.portrait === undefined ? undefined : o.portrait === true ? 0.5 : o.portrait,
+    // --logo sans valeur : logo.png du dossier d'entrée.
+    logo: o.logo === undefined ? undefined : path.resolve(o.logo === true ? path.join(inputDir, 'logo.png') : o.logo),
+    logoSize: o.logoSize,
   };
+  if (opts.logo && !existsSync(opts.logo)) throw new Error(`logo introuvable : ${opts.logo}`);
 
   if (!o.external && !(await hasEncoder(opts.codec))) {
     console.warn(`⚠ encodeur ${opts.codec} indisponible, bascule sur libx264`);
@@ -145,7 +153,7 @@ async function run(o: any, cmd: Command): Promise<void> {
     .map((file) => ({
       file,
       input: path.join(inputDir, file),
-      output: path.join(outputDir, `${path.parse(file).name}_${o.external ? 'external' : opts.effect}${opts.portrait !== undefined ? '_portrait' : ''}.mp4`),
+      output: path.join(outputDir, `${path.parse(file).name}_${o.external ? 'external' : opts.effect}${opts.portrait !== undefined ? '_portrait' : ''}${opts.logo ? '_logo' : ''}.mp4`),
     }))
     .filter((t) => {
       if (!o.overwrite && existsSync(t.output)) {

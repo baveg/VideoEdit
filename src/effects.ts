@@ -65,7 +65,7 @@ function maskWeight(px: number, py: number, r: Region, shape: Shape, feather: bo
  * visuellement identique pour un flou fort, et bien plus rapide sur les grands visages.
  */
 function ghost(frame: Buffer, width: number, r: Region, shape: Shape, strength: number): void {
-  const radius = Math.max(3, Math.round((Math.max(r.w, r.h) / 6) * strength));
+  const radius = Math.max(3, Math.round((Math.max(r.w, r.h) / 20) * strength));
   const f = Math.max(1, Math.floor(radius / 4));
   const sw = Math.ceil(r.w / f);
   const sh = Math.ceil(r.h / f);

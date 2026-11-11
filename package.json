@@ -11,6 +11,7 @@
     "models": "tsx src/cli.ts models",
     "faceghost": "tsx src/cli.ts run -m faceghost",
     "faceghost-portrait": "tsx src/cli.ts run -m faceghost --portrait",
+    "faceghost-portrait-logo": "tsx src/cli.ts run -m faceghost --portrait --logo",
     "pixelateme": "tsx src/cli.ts run -m pixelateme",
     "blackout": "tsx src/cli.ts run -m blackout",
     "personbox": "tsx src/cli.ts run -m personbox",
